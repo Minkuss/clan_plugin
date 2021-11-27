@@ -1,0 +1,11 @@
+name: Clan_plugin
+version: '${project.version}'
+main: me.minkuss.clan_plugin
+api-version: 1.17
+commands:
+  createclan:
+  inviteclan:
+  accept:
+  leaveclan:
+  deleteclan:
+
