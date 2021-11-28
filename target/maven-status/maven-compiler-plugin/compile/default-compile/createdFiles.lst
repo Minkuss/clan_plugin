@@ -1,3 +1,4 @@
+me\minkuss\commands\ClanKickCommand.class
 me\minkuss\listeners\InviteEventListener.class
 me\minkuss\commands\LeaveClanCommand.class
 me\minkuss\listeners\JoinPlayerListener.class

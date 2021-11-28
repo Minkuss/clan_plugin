@@ -33,7 +33,7 @@ public class DeleteClanCommand implements CommandExecutor {
             return false;
         }
 
-        else if (owning == null) {
+        else if (!(owning.equals(player.getName()))) {
             player.sendMessage(ChatColor.RED + "Вы не являетесь владельцем клана - " + clan);
             return false;
         }
