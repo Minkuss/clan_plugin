@@ -1,6 +1,7 @@
 package me.minkuss.listeners;
 
 import me.minkuss.clan_plugin;
+import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -22,9 +23,16 @@ public class JoinPlayerListener implements Listener {
         FileConfiguration config = _plugin.getConfig();
         Player player = event.getPlayer();
         String id = _plugin.getConfig().getString("players." + player.getName());
+        String massage = _plugin.getConfig().getString("players." + player.getName() + ".massage");
 
         if(id == null) {
             config.set("players." + player.getName() + ".inclan?", false);
+
+            _plugin.saveConfig();
+        }
+        else if (massage != null) {
+            player.sendMessage(ChatColor.RED + massage);
+            config.set("players." + player.getName() + ".massage", null);
 
             _plugin.saveConfig();
         }

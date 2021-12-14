@@ -31,10 +31,15 @@ public class CreateClanCommand implements CommandExecutor {
             FileConfiguration config = _plugin.getConfig();
             String clanName = args[0];
             Player player = (Player) sender;
-            String nick = sender.getName();
-            Boolean inClan = config.getBoolean("players." + player.getUniqueId() + ".inclan?");
+            Boolean inClan = config.getBoolean("players." + player.getName() + ".inclan?");
             if (!inClan) {
                 List<String> playerlist = List.of(player.getName());
+                List<String> clanlist = config.getStringList("clanlist");
+                if (clanlist.contains(clanName)) {
+                    player.sendMessage(ChatColor.RED + "Клан с таким названием уже существует.");
+                    return false;
+                }
+                clanlist.add(clanName);
                 config.createSection("players." + player.getName() + ".inclan?");
                 config.createSection("players." + player.getName() + ".clan");
                 config.createSection("clans." + clanName + ".participants");
@@ -44,6 +49,7 @@ public class CreateClanCommand implements CommandExecutor {
                 config.set("clans." + clanName + ".clanmates", 1);
                 config.set("clans." + clanName + ".participants", playerlist);
                 config.set("clans." + clanName + ".owners", player.getName());
+                config.set("clanlist", clanlist);
 
                 config.set("players." + player.getName() + ".inclan?", true);
                 config.set("players." + player.getName() + ".clan", clanName);

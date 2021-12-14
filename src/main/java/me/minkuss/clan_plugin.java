@@ -30,6 +30,7 @@ public final class clan_plugin extends JavaPlugin {
         _server.getPluginCommand("leaveclan").setExecutor(new LeaveClanCommand(this));
         _server.getPluginCommand("deleteclan").setExecutor(new DeleteClanCommand(this));
         _server.getPluginCommand("clankick").setExecutor(new ClanKickCommand(this));
+        _server.getPluginCommand("clanlist").setExecutor(new ClanListCommand(this));
     }
 
     private void RegisterEvents() {

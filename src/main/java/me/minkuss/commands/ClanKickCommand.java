@@ -62,6 +62,9 @@ public class ClanKickCommand implements CommandExecutor {
         if (_plugin.getServer().getPlayer(playerkick) != null) {
             _plugin.getServer().getPlayer(playerkick).sendMessage(ChatColor.RED + "К сожалению, вас исключили из клана - " + clan + ". Зря они так поступили(");
         }
+        else if (_plugin.getServer().getPlayer(playerkick) == null) {
+            config.set("players." + playerkick + ".massage", "К сожалению, вас исключили из клана. Зря они так поступили(");
+        }
         _plugin.saveConfig();
 
 
