@@ -23,6 +23,7 @@ public class DeleteClanCommand implements CommandExecutor {
         String clan = config.getString("players." + player.getName() + ".clan");
         boolean inclan = config.getBoolean("players." + player.getName() + ".inclan?");
         String owning = config.getString("clans." + clan + ".owners");
+        List<String> clanlist = config.getStringList("clanlist");
         if (!(sender instanceof Player)) {
             sender.sendMessage("Эту команду может отправить только игрок.");
             return false;
@@ -44,6 +45,8 @@ public class DeleteClanCommand implements CommandExecutor {
             config.set("players." + item + ".clan", null);
             _plugin.saveConfig();
         }
+        clanlist.remove(clan);
+        config.set("clanlist", clanlist);
         config.set("clans." + clan, null);
         player.sendMessage(ChatColor.GOLD + "Вы успешно удалили клан - " + clan);
         _plugin.saveConfig();

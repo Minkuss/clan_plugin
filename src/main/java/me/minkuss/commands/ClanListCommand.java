@@ -26,6 +26,8 @@ public class ClanListCommand implements CommandExecutor {
             return false;
         }
 
+        sender.sendMessage(ChatColor.BLUE + "[Список кланов: ]");
+
         for (String item : clanlist) {
             sender.sendMessage(ChatColor.GOLD + item);
         }

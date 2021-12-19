@@ -23,6 +23,7 @@ public class LeaveClanCommand implements CommandExecutor {
         String clan = config.getString("players." + player.getName() + ".clan");
         boolean inclan = config.getBoolean("players." + player.getName() + ".inclan?");
         int mates_nubmer = config.getInt("clans." + clan + ".clanmates");
+        List<String> clanlist = config.getStringList("clanlist");
 
         if (!(sender instanceof Player)) {
             sender.sendMessage("Эту команду может отправить только игрок.");
@@ -36,6 +37,8 @@ public class LeaveClanCommand implements CommandExecutor {
 
         else if (inclan) {
             if (mates_nubmer == 1) {
+                clanlist.remove(clan);
+                config.set("clanlist", clanlist);
                 config.set("clans." + clan, null);
                 config.set("players." + player.getName() + ".clan", null);
                 config.set("players." + player.getName() + ".inclan?", false);

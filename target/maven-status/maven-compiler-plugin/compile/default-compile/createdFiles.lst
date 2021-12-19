@@ -9,4 +9,6 @@ me\minkuss\commands\CreateClanCommand.class
 me\minkuss\listeners\InviteEventListener$1.class
 me\minkuss\events\InviteEvent.class
 me\minkuss\clan_plugin.class
+me\minkuss\commands\ClanInfoCommand.class
 me\minkuss\commands\DeleteClanCommand.class
+me\minkuss\commands\JoinClanCommand.class
