@@ -33,6 +33,7 @@ public final class clan_plugin extends JavaPlugin {
         _server.getPluginCommand("clanlist").setExecutor(new ClanListCommand(this));
         _server.getPluginCommand("claninfo").setExecutor(new ClanInfoCommand(this));
         _server.getPluginCommand("joinclan").setExecutor(new JoinClanCommand(this));
+        _server.getPluginCommand("requests").setExecutor(new JoinNotificationCommand(this));
     }
 
     private void RegisterEvents() {

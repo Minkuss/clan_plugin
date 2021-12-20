@@ -12,4 +12,5 @@ commands:
   clanlist:
   claninfo:
   joinclan:
+  requests:
 
