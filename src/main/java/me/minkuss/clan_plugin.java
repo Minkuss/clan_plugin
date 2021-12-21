@@ -3,6 +3,8 @@ package me.minkuss;
 import me.minkuss.commands.*;
 import me.minkuss.listeners.InviteEventListener;
 import me.minkuss.listeners.JoinPlayerListener;
+import me.minkuss.tab_completers.ClanTabCompleters;
+import me.minkuss.tab_completers.ReqTabCompleters;
 import org.bukkit.Server;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -24,16 +26,11 @@ public final class clan_plugin extends JavaPlugin {
     }
 
     private void SetCommands() {
-        _server.getPluginCommand("createclan").setExecutor(new CreateClanCommand(this));
-        _server.getPluginCommand("inviteclan").setExecutor(new InviteClanCommand(this));
-        _server.getPluginCommand("accept").setExecutor(new AcceptInviteCommand(this));
-        _server.getPluginCommand("leaveclan").setExecutor(new LeaveClanCommand(this));
-        _server.getPluginCommand("deleteclan").setExecutor(new DeleteClanCommand(this));
-        _server.getPluginCommand("clankick").setExecutor(new ClanKickCommand(this));
-        _server.getPluginCommand("clanlist").setExecutor(new ClanListCommand(this));
-        _server.getPluginCommand("claninfo").setExecutor(new ClanInfoCommand(this));
-        _server.getPluginCommand("joinclan").setExecutor(new JoinClanCommand(this));
-        _server.getPluginCommand("requests").setExecutor(new JoinNotificationCommand(this));
+        _server.getPluginCommand("clan").setExecutor(new ClanCommands(this));
+        _server.getPluginCommand("clan").setTabCompleter(new ClanTabCompleters(this));
+
+        _server.getPluginCommand("req").setExecutor(new ReqCommands(this));
+        _server.getPluginCommand("req").setTabCompleter(new ReqTabCompleters(this));
     }
 
     private void RegisterEvents() {

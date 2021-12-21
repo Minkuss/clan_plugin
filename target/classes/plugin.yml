@@ -3,14 +3,6 @@ version: '1.0-SNAPSHOT'
 main: me.minkuss.clan_plugin
 api-version: 1.17
 commands:
-  createclan:
-  inviteclan:
-  accept:
-  leaveclan:
-  deleteclan:
-  clankick:
-  clanlist:
-  claninfo:
-  joinclan:
-  requests:
+  clan:
+  req:
 
