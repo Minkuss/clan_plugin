@@ -36,6 +36,17 @@ public class ReqCommands implements CommandExecutor {
 
             config.set("players." + player.getName() + ".joiners", null);
             player.sendMessage(ChatColor.GREEN + "Вы успешно очистили список запросов");
+            List<String> joins = config.getStringList("players." + player.getName() + ".joiners");
+
+            for (String item : joins) {
+                if (_plugin.getServer().getPlayer(item) != null) {
+                    _plugin.getServer().getPlayer(item).sendMessage(ChatColor.RED + "К сожалению, ваш запрос на вступление в клан отклонили");
+                }
+                else if (_plugin.getServer().getPlayer(item) == null) {
+                    config.set("players." + item + ".massage", "К сожалению, ваш запрос на вступление в клан отклонили");
+                }
+            }
+
             _plugin.saveConfig();
 
             return false;
@@ -55,11 +66,21 @@ public class ReqCommands implements CommandExecutor {
                     config.set("clans." + clanName + ".clanmates", mates_nubmer + 1);
                     clanplayers.add(player);
                     config.set("clans." + clanName + ".participants", clanplayers);
+                    config.set("players." + player + ".inclan?", true);
+                    config.set("players." + player + ".clan", clanName);
 
                     playerSender.sendMessage(ChatColor.GREEN + "Вы успешно добавили игрока");
 
                     joins.remove(player);
                     config.set("players." + playerSender.getName() + ".joiners", joins);
+
+                    if (_plugin.getServer().getPlayer(player) != null) {
+                        _plugin.getServer().getPlayer(player).sendMessage(ChatColor.GREEN + "[Info] " + ChatColor.GOLD + "Вас приняли в клан - " + clanName + "!");
+                    }
+
+                    else if (_plugin.getServer().getPlayer(player) == null) {
+                        config.set("players." + player + ".massage", "Вас приняли в клан - " + clanName);
+                    }
 
                     _plugin.saveConfig();
                 }
@@ -84,6 +105,18 @@ public class ReqCommands implements CommandExecutor {
                 config.set("clans." + clanName + ".clanmates", mates_nubmer + playersnum);
 
                 playerSender.sendMessage(ChatColor.GREEN + "Вы успешно добавили всех игроков");
+
+                for (String item : joins) {
+                    config.set("players." + item + ".inclan?", true);
+                    config.set("players." + item + ".clan", clanName);
+
+                    if (_plugin.getServer().getPlayer(item) != null) {
+                        _plugin.getServer().getPlayer(item).sendMessage(ChatColor.GREEN + "[Info] " + ChatColor.GOLD + "Вас приняли в клан - " + clanName + "!");
+                    }
+                    else if (_plugin.getServer().getPlayer(item) == null) {
+                        config.set("players." + item + ".massage", "Вас приняли в клан - " + clanName);
+                    }
+                }
 
                 config.set("players." + playerSender.getName() + ".joiners", null);
 

@@ -31,7 +31,7 @@ public class JoinPlayerListener implements Listener {
             _plugin.saveConfig();
         }
         else if (massage != null) {
-            player.sendMessage(ChatColor.RED + massage);
+            player.sendMessage(ChatColor.GREEN + "[Info] " + ChatColor.GOLD + massage);
             config.set("players." + player.getName() + ".massage", null);
 
             _plugin.saveConfig();

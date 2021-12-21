@@ -36,5 +36,6 @@ public final class clan_plugin extends JavaPlugin {
     private void RegisterEvents() {
         _plugin_manager.registerEvents(new JoinPlayerListener(this), this);
         _plugin_manager.registerEvents(new InviteEventListener(this), this);
+        _plugin_manager.registerEvents(new ClanCommands(this), this);
     }
 }

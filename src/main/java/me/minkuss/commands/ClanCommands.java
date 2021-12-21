@@ -8,14 +8,18 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 import java.util.List;
 
-public class ClanCommands implements CommandExecutor {
+public class ClanCommands implements CommandExecutor, Listener {
     private final clan_plugin _plugin;
     public ClanCommands(clan_plugin plugin) {
         _plugin = plugin;
     }
+    boolean chat = false;
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -398,11 +402,63 @@ public class ClanCommands implements CommandExecutor {
                 player.sendMessage(ChatColor.GOLD + item);
             }
 
-            player.sendMessage(ChatColor.GREEN + "[Info]" + ChatColor.GOLD + "Чтобы принять одного человека в клан, напишите /req accept <ник>. Чтобы принять всех, напишите /req accept, чтобы отчистить, напишите /req clean");
+            player.sendMessage(ChatColor.GREEN + "[Info] " + ChatColor.GOLD + "Чтобы принять одного человека в клан, напишите /req accept <ник>. Чтобы принять всех, напишите /req accept, чтобы отчистить, напишите /req clean");
+
+            return false;
+        }
+
+        if (args[0].equals("chat")) {
+            FileConfiguration config = _plugin.getConfig();
+            boolean inclan = config.getBoolean("players." + sender.getName() + ".inclan?");
+
+            if (!inclan) {
+                sender.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Вы не состоите в клане");
+                return false;
+            }
+
+            if (!(config.contains("players." + sender.getName() + ".chat"))) {
+                config.set("players." + sender.getName() + ".chat", chat);
+                if (chat) {
+                    sender.sendMessage(ChatColor.GREEN + "[Info] " + ChatColor.GOLD + "Режим кланового чата активирован");
+                }
+            }
+
+            if (config.contains("players." + sender.getName() + ".chat")) {
+                boolean temp = config.getBoolean("players." + sender.getName() + ".chat");
+                config.set("players." + sender.getName() + ".chat", !temp);
+                if (temp) {
+                    sender.sendMessage(ChatColor.GREEN + "[Info] " + ChatColor.GOLD + "Режим кланового чата выключен");
+                }
+                if (!temp) {
+                    sender.sendMessage(ChatColor.GREEN + "[Info] " + ChatColor.GOLD + "Режим кланового чата активирован");
+                }
+            }
+            _plugin.saveConfig();
 
             return false;
         }
 
         return false;
+    }
+
+    @EventHandler
+    public void OnMassageEvent(AsyncPlayerChatEvent event) {
+        FileConfiguration config = _plugin.getConfig();
+        Player sender = event.getPlayer();
+        String clanName = config.getString("players." + sender.getName() + ".clan");
+        boolean inclan = config.getBoolean("players." + sender.getName() + ".inclan?");
+        boolean isChat = config.getBoolean("players." + sender.getName() + ".chat");
+        List<String> playersList = config.getStringList("clans." + clanName + ".participants");
+
+        if (inclan) {
+            if (isChat) {
+                for (String item : playersList) {
+                    if (_plugin.getServer().getPlayer(item) != null) {
+                        _plugin.getServer().getPlayer(item).sendMessage(ChatColor.GREEN + "[" + sender.getName() + "] " + ChatColor.GOLD + event.getMessage());
+                    }
+                }
+                event.setCancelled(true);
+            }
+        }
     }
 }

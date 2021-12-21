@@ -28,6 +28,7 @@ public class InviteEventListener implements Listener {
                 if (accept_time == 0) {
                     config.set("players." + player.getName() + ".accepting", null);
                     config.set("players." + player.getName() + ".acceptingClan", null);
+                    config.set("players." + player.getName() + ".inviter", null);
                     _plugin.saveConfig();
                     player.sendMessage("Время приглашения истекло...");
                     cancel();
