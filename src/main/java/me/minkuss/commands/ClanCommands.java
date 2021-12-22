@@ -3,6 +3,7 @@ package me.minkuss.commands;
 import me.minkuss.clan_plugin;
 import me.minkuss.events.InviteEvent;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -34,7 +35,9 @@ public class ClanCommands implements CommandExecutor, Listener {
         }
 
         if (args[0].equals("help")) {
-            List<String> commands = List.of("/clan help", "/clan create <название>", "/clan list", "/clan info <клан>", "/clan invite <ник>", "/clan accept", "/clan kick <ник>", "/clan delete", "/clan leave", "/clan join <название>", "/clan requests");
+            FileConfiguration config = _plugin.getConfig();
+            List<String> commands = config.getStringList("clan-commands");
+//            List<String> commands = List.of("/clan help", "/clan create <название>", "/clan list", "/clan info <клан>", "/clan invite <ник>", "/clan accept", "/clan kick <ник>", "/clan delete", "/clan leave", "/clan join <название>", "/clan requests");
             sender.sendMessage(ChatColor.BLUE + "[Список комманд]: ");
             for (String item : commands) {
                 sender.sendMessage(ChatColor.GREEN + item);
@@ -436,6 +439,106 @@ public class ClanCommands implements CommandExecutor, Listener {
             _plugin.saveConfig();
 
             return false;
+        }
+
+        if (args[0].equals("sethome")) {
+            FileConfiguration config = _plugin.getConfig();
+            String clan = config.getString("players." + sender.getName() + ".clan");
+            String owner = config.getString("clans." + clan + ".owners");
+            Player player = (Player) sender;
+            boolean isHome = config.contains("clans." + clan + ".homeName");
+            if (owner.equals(player.getName())) {
+                if (!player.getWorld().getName().equals("hub")) {
+                    if (!isHome) {
+                        String name = config.getString("clans." + clan + ".homeName");
+                        if (args.length == 2) {
+                            String homeName = args[1];
+                            if (homeName.equals(name)) {
+                                player.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Точка дома с таким именем уже существует");
+                                return false;
+                            } else {
+                                List<Double> coords = List.of(player.getLocation().getX(), player.getLocation().getY(), player.getLocation().getZ());
+                                config.set("clans." + clan + ".clanhomeLoc", coords);
+                                config.set("clans." + clan + ".homeName", homeName);
+                                player.sendMessage(ChatColor.GREEN + "[Info] " + ChatColor.GOLD + "Вы создали точку кланового дома");
+                                _plugin.saveConfig();
+                                return false;
+                            }
+                        } else if (args.length == 1) {
+                            player.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Введите название точки дома");
+                            return false;
+                        }
+                    }
+                    else {
+                        player.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Вы не можете создать две точки дома");
+                    }
+                }
+                else {
+                    player.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Вы не можете ставить точку дома здесь");
+                    return false;
+                }
+            }
+            else {
+                player.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Вы не являетесь владельцем клана");
+                return false;
+            }
+        }
+
+        if (args[0].equals("delhome")) {
+            FileConfiguration config = _plugin.getConfig();
+            String clan = config.getString("players." + sender.getName() + ".clan");
+            String owner = config.getString("clans." + clan + ".owners");
+            Player player = (Player) sender;
+            if (owner.equals(player.getName())) {
+                String name = config.getString("clans." + clan + ".homeName");
+                if (args.length == 2) {
+                    String homeName = args[1];
+                    if (homeName.equals(name)) {
+                        config.set("clans." + clan + ".homeName", null);
+                        config.set("clans." + clan + ".clanhomeLoc", null);
+                        player.sendMessage(ChatColor.GREEN + "[Info] " + ChatColor.GOLD + "Вы успешно удалили точку дома");
+                        _plugin.saveConfig();
+                        return false;
+                    } else {
+                        player.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Такой точки дома не существует");
+                        return false;
+                    }
+                } else if (args.length == 1) {
+                    player.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Введите название точки дома");
+                    return false;
+                }
+            }
+            else {
+                player.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Вы не являетесь владельцем клана");
+                return false;
+            }
+        }
+
+        if (args[0].equals("home")) {
+            FileConfiguration config = _plugin.getConfig();
+            Player player = (Player) sender;
+            boolean inClan = config.getBoolean("players." + player.getName() + ".inclan?");
+            if (inClan) {
+                String clan = config.getString("players." + player.getName() + ".clan");
+                boolean isHome = config.contains("clans." + clan + ".homeName");
+                if (isHome) {
+                    List<Double> coords = config.getDoubleList("clans." + clan + ".clanhomeLoc");
+                    String homeName = config.getString("clans." + clan + ".homeName");
+                    player.sendMessage(ChatColor.GREEN + "[Info] " + ChatColor.GOLD + "Ваш клановый дом - " + homeName + " находится по координатам: ");
+                    player.sendMessage(ChatColor.BLUE + "X " + ChatColor.GOLD + coords.get(0));
+                    player.sendMessage(ChatColor.BLUE + "Y " + ChatColor.GOLD + coords.get(1));
+                    player.sendMessage(ChatColor.BLUE + "Z " + ChatColor.GOLD + coords.get(2));
+                    return false;
+                }
+                else {
+                    player.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "У вашего клана нет точки дома");
+                    return false;
+                }
+            }
+            else {
+                player.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Вы не состоите в клане");
+                return false;
+            }
         }
 
         return false;
