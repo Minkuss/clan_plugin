@@ -3,7 +3,6 @@ package me.minkuss.commands;
 import me.minkuss.clan_plugin;
 import me.minkuss.events.InviteEvent;
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -14,6 +13,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Random;
 
 public class ClanCommands implements CommandExecutor, Listener {
     private final clan_plugin _plugin;
@@ -59,10 +60,13 @@ public class ClanCommands implements CommandExecutor, Listener {
                 if (!inClan) {
                     List<String> playerlist = List.of(player.getName());
                     List<String> clanlist = config.getStringList("clanlist");
+                    List<String> owners = List.of(player.getName());
+
                     if (clanlist.contains(clanName)) {
                         player.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Клан с таким названием уже существует");
                         return false;
                     }
+
                     clanlist.add(clanName);
                     config.createSection("players." + player.getName() + ".inclan?");
                     config.createSection("players." + player.getName() + ".clan");
@@ -72,7 +76,8 @@ public class ClanCommands implements CommandExecutor, Listener {
 
                     config.set("clans." + clanName + ".clanmates", 1);
                     config.set("clans." + clanName + ".participants", playerlist);
-                    config.set("clans." + clanName + ".owners", player.getName());
+                    config.set("clans." + clanName + ".owners", owners);
+                    config.set("clans." + clanName + ".first-owner", player.getName());
                     config.set("clanlist", clanlist);
 
                     config.set("players." + player.getName() + ".inclan?", true);
@@ -93,7 +98,7 @@ public class ClanCommands implements CommandExecutor, Listener {
             Player player = (Player) sender;
             String clan = config.getString("players." + player.getName() + ".clan");
             boolean inclan = config.getBoolean("players." + player.getName() + ".inclan?");
-            String owning = config.getString("clans." + clan + ".owners");
+            String firstOwner = config.getString("clans." + clan + ".first-owner");
             List<String> clanlist = config.getStringList("clanlist");
 
             if (!inclan) {
@@ -101,12 +106,10 @@ public class ClanCommands implements CommandExecutor, Listener {
                 return false;
             }
 
-            else {
-                assert owning != null;
-                if (!(owning.equals(player.getName()))) {
-                    player.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Вы не являетесь владельцем клана - " + clan);
-                    return false;
-                }
+            assert firstOwner != null;
+            if (!(firstOwner.equals(player.getName()))) {
+                player.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Удалить клан может только создатель клана");
+                return false;
             }
 
             List<String> playerslist = config.getStringList("clans." + clan + ".participants");
@@ -210,6 +213,8 @@ public class ClanCommands implements CommandExecutor, Listener {
             boolean inclan = config.getBoolean("players." + player.getName() + ".inclan?");
             int mates_nubmer = config.getInt("clans." + clan + ".clanmates");
             List<String> clanlist = config.getStringList("clanlist");
+            List<String> owners = config.getStringList("clans." + clan + ".owners");
+            String firstOwner = config.getString("clans." + clan + ".first-owner");
 
             if (inclan) {
                 if (mates_nubmer == 1) {
@@ -222,6 +227,26 @@ public class ClanCommands implements CommandExecutor, Listener {
                     _plugin.saveConfig();
                     return false;
                 }
+
+                if (owners.size() == 1 && owners.contains(player.getName())) {
+                    player.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Вы единственный модератор клана, поэтому перед выходом передайте пожалуйста права другому участнику, выбирайте с умом)");
+                    return false;
+                }
+
+                assert firstOwner != null;
+                if (firstOwner.equals(player.getName())) {
+                    owners.remove(player.getName());
+                    String temp = owners.get(new Random().nextInt(owners.size()));
+                    config.set("clans." + clan + ".owners", owners);
+                    config.set("clans." + clan + ".first-owner", temp);
+                    player.sendMessage(ChatColor.GREEN + "[Info] " + ChatColor.GOLD + "Права создателя перешли игроку - " + temp + ". Теперь вы их враг");
+                }
+
+                if (owners.contains(player.getName())) {
+                    owners.remove(player.getName());
+                    config.set("clans." + clan + ".owners", owners);
+                }
+
                 List<String> playerslist = config.getStringList("clans." + clan + ".participants");
                 playerslist.remove(player.getName());
 
@@ -247,7 +272,8 @@ public class ClanCommands implements CommandExecutor, Listener {
             Player playersender = (Player) sender;
             String clan = config.getString("players." + playersender.getName() + ".clan");
             boolean inclan = config.getBoolean("players." + playersender.getName() + ".inclan?");
-            String owning = config.getString("clans." + clan + ".owners");
+            List<String> owners = config.getStringList("clans." + clan + ".owners");
+            String firstOwner = config.getString("clans." + clan + ".first-owner");
             int mates_nubmer = config.getInt("clans." + clan + ".clanmates");
 
             if (args.length == 1) {
@@ -260,14 +286,19 @@ public class ClanCommands implements CommandExecutor, Listener {
                 return false;
             }
 
-            else if (!(owning.equals(playersender.getName()))) {
-                playersender.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Вы не являетесь владельцем клана");
+            if (!(owners.contains(playersender.getName()))) {
+                playersender.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Вы не являетесь модератором или создателем клана");
+                return false;
+            }
+
+            String playerkick = args[1];
+
+            if (owners.contains(playerkick) && !Objects.equals(firstOwner, playersender.getName())) {
+                playersender.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Вы не можете исключить модератора или создателя клана");
                 return false;
             }
 
             else if (args.length == 2) {
-
-                String playerkick = args[1];
 
                 if (playersender.getName().equals(playerkick)) {
                     playersender.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Вы не можете исключить самого себя");
@@ -307,19 +338,46 @@ public class ClanCommands implements CommandExecutor, Listener {
         }
 
         if (args[0].equals("info")) {
+            Player player =  (Player) sender;
+            FileConfiguration config = _plugin.getConfig();
+            boolean inClan = config.getBoolean("players." + player.getName() + ".inclan?");
 
             if (args.length == 1) {
-                sender.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Введите название клана");
+                if (inClan) {
+                    String clan = config.getString("players." + player.getName() + ".clan");
+                    String firstOwner = config.getString("clans." + clan + ".first-owner");
+                    List<String> owners = config.getStringList("clans." + clan + ".owners");
+                    int clanmates = config.getInt("clans." + clan + ".clanmates");
+                    List<String> participants = config.getStringList("clans." + clan + ".participants");
+
+                    player.sendMessage(ChatColor.BLUE + "[Информация]");
+                    player.sendMessage(ChatColor.GREEN + "[Название клана]: " + ChatColor.GOLD + clan);
+                    player.sendMessage(ChatColor.GREEN + "[Создатель клана]: " + ChatColor.GOLD + firstOwner);
+                    player.sendMessage(ChatColor.GREEN + "[Список модераторов]: ");
+
+                    for (String item : owners) {
+                        player.sendMessage(ChatColor.RED + item);
+                    }
+
+                    player.sendMessage(ChatColor.GREEN + "[Количество игроков]: " + ChatColor.GOLD + clanmates);
+                    player.sendMessage(ChatColor.GREEN + "[Список игроков]: ");
+
+                    for (String item : participants) {
+                        player.sendMessage(ChatColor.GOLD + item);
+                    }
+                }
+                else {
+                    player.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Введите название клана");
+                }
                 return false;
             }
 
             else if (args.length == 2) {
 
-                Player player =  (Player) sender;
-                FileConfiguration config = _plugin.getConfig();
                 String clanName = args[1];
                 List<String> clanlist = config.getStringList("clanlist");
-                String owner = config.getString("clans." + clanName + ".owners");
+                String firstOwner = config.getString("clans." + clanName + ".first-owner");
+                List<String> owners = config.getStringList("clans." + clanName + ".owners");
                 int clanmates = config.getInt("clans." + clanName + ".clanmates");
                 List<String> participants = config.getStringList("clans." + clanName + ".participants");
 
@@ -330,7 +388,13 @@ public class ClanCommands implements CommandExecutor, Listener {
 
                 player.sendMessage(ChatColor.BLUE + "[Информация]");
                 player.sendMessage(ChatColor.GREEN + "[Название клана]: " + ChatColor.GOLD + clanName);
-                player.sendMessage(ChatColor.GREEN + "[Владелец клана]: " + ChatColor.GOLD + owner);
+                player.sendMessage(ChatColor.GREEN + "[Создатель клана]: " + ChatColor.GOLD + firstOwner);
+                player.sendMessage(ChatColor.GREEN + "[Список модераторов]: ");
+
+                for (String item : owners) {
+                    player.sendMessage(ChatColor.RED + item);
+                }
+
                 player.sendMessage(ChatColor.GREEN + "[Количество игроков]: " + ChatColor.GOLD + clanmates);
                 player.sendMessage(ChatColor.GREEN + "[Список игроков]: ");
 
@@ -353,7 +417,7 @@ public class ClanCommands implements CommandExecutor, Listener {
                 FileConfiguration config = _plugin.getConfig();
                 String clan = args[1];
                 List<String> clanlist = config.getStringList("clanlist");
-                String owner = config.getString("clans." + clan + ".owners");
+                String owner = config.getString("clans." + clan + ".first-owner");
                 List<String> joins = config.getStringList("players." + owner + ".joiners");
                 boolean inclan = config.getBoolean("players." + player.getName() + ".inclan?");
 
@@ -444,9 +508,10 @@ public class ClanCommands implements CommandExecutor, Listener {
         if (args[0].equals("sethome")) {
             FileConfiguration config = _plugin.getConfig();
             String clan = config.getString("players." + sender.getName() + ".clan");
-            String owner = config.getString("clans." + clan + ".owners");
+            String owner = config.getString("clans." + clan + ".first-owner");
             Player player = (Player) sender;
             boolean isHome = config.contains("clans." + clan + ".homeName");
+            assert owner != null;
             if (owner.equals(player.getName())) {
                 if (!player.getWorld().getName().equals("hub")) {
                     if (!isHome) {
@@ -455,15 +520,14 @@ public class ClanCommands implements CommandExecutor, Listener {
                             String homeName = args[1];
                             if (homeName.equals(name)) {
                                 player.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Точка дома с таким именем уже существует");
-                                return false;
                             } else {
                                 List<Double> coords = List.of(player.getLocation().getX(), player.getLocation().getY(), player.getLocation().getZ());
                                 config.set("clans." + clan + ".clanhomeLoc", coords);
                                 config.set("clans." + clan + ".homeName", homeName);
                                 player.sendMessage(ChatColor.GREEN + "[Info] " + ChatColor.GOLD + "Вы создали точку кланового дома");
                                 _plugin.saveConfig();
-                                return false;
                             }
+                            return false;
                         } else if (args.length == 1) {
                             player.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Введите название точки дома");
                             return false;
@@ -471,6 +535,7 @@ public class ClanCommands implements CommandExecutor, Listener {
                     }
                     else {
                         player.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Вы не можете создать две точки дома");
+                        return false;
                     }
                 }
                 else {
@@ -487,7 +552,7 @@ public class ClanCommands implements CommandExecutor, Listener {
         if (args[0].equals("delhome")) {
             FileConfiguration config = _plugin.getConfig();
             String clan = config.getString("players." + sender.getName() + ".clan");
-            String owner = config.getString("clans." + clan + ".owners");
+            String owner = config.getString("clans." + clan + ".first-owner");
             Player player = (Player) sender;
             if (owner.equals(player.getName())) {
                 String name = config.getString("clans." + clan + ".homeName");
@@ -498,11 +563,10 @@ public class ClanCommands implements CommandExecutor, Listener {
                         config.set("clans." + clan + ".clanhomeLoc", null);
                         player.sendMessage(ChatColor.GREEN + "[Info] " + ChatColor.GOLD + "Вы успешно удалили точку дома");
                         _plugin.saveConfig();
-                        return false;
                     } else {
                         player.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Такой точки дома не существует");
-                        return false;
                     }
+                    return false;
                 } else if (args.length == 1) {
                     player.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Введите название точки дома");
                     return false;
@@ -528,17 +592,68 @@ public class ClanCommands implements CommandExecutor, Listener {
                     player.sendMessage(ChatColor.BLUE + "X " + ChatColor.GOLD + coords.get(0));
                     player.sendMessage(ChatColor.BLUE + "Y " + ChatColor.GOLD + coords.get(1));
                     player.sendMessage(ChatColor.BLUE + "Z " + ChatColor.GOLD + coords.get(2));
-                    return false;
                 }
                 else {
                     player.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "У вашего клана нет точки дома");
-                    return false;
                 }
             }
             else {
                 player.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Вы не состоите в клане");
+            }
+            return false;
+        }
+
+        if (args[0].equals("setmoderator")) {
+            FileConfiguration config = _plugin.getConfig();
+            Player playerSender = (Player) sender;
+            String clan = config.getString("players." + playerSender.getName() + ".clan");
+            boolean inClan = config.getBoolean("players." + playerSender.getName() + ".inclan?");
+            String firstOwner = config.getString("clans." + clan + ".first-owner");
+            List<String> owners = config.getStringList("clans." + clan + ".owners");
+            List<String> players = config.getStringList("clans." + clan + ".participants");
+
+            if (inClan) {
+                assert firstOwner != null;
+                if (firstOwner.equals(playerSender.getName())) {
+
+                    if (args.length == 1) {
+                        playerSender.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Введите имя игрока");
+                        return false;
+                    }
+
+                    String playerAdd = args[1];
+                    if (args.length == 2) {
+                        if (players.contains(playerAdd)) {
+                            if (!owners.contains(playerAdd)) {
+                                owners.add(playerAdd);
+                                config.set("clans." + clan + ".owners", owners);
+                                playerSender.sendMessage(ChatColor.GREEN + "[Info] " + ChatColor.GOLD + "Вы добавили нового модератора");
+                                if (_plugin.getServer().getPlayer(playerAdd) != null) {
+                                    _plugin.getServer().getPlayer(playerAdd).sendMessage(ChatColor.GREEN + "[Info] " + ChatColor.GOLD + "Поздравляем! Отныне вы модератор клана");
+                                } else {
+                                    config.set("players." + playerAdd + ".massage", "Поздравляем! Отныне вы модератор сервера");
+                                }
+                                _plugin.saveConfig();
+                            } else {
+                                playerSender.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Этот игрок уже является модератором");
+                                return false;
+                            }
+                        } else {
+                            playerSender.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Такого игрока нет в вашем клане");
+                            return false;
+                        }
+                    }
+
+                } else {
+                    playerSender.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Вы не являетесь создателем клана");
+                    return false;
+                }
+
+            } else {
+                playerSender.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Вы не состоите в клане");
                 return false;
             }
+
         }
 
         return false;
