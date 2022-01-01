@@ -635,7 +635,7 @@ public class ClanCommands implements CommandExecutor, Listener {
                                 config.set("clans." + clan + ".owners", owners);
                                 playerSender.sendMessage(ChatColor.GREEN + "[Info] " + ChatColor.GOLD + "Вы добавили нового модератора");
                                 if (_plugin.getServer().getPlayer(playerAdd) != null) {
-                                    _plugin.getServer().getPlayer(playerAdd).sendMessage(ChatColor.GREEN + "[Info] " + ChatColor.GOLD + "Поздравляем! Отныне вы модератор клана");
+                                    Objects.requireNonNull(_plugin.getServer().getPlayer(playerAdd)).sendMessage(ChatColor.GREEN + "[Info] " + ChatColor.GOLD + "Поздравляем! Отныне вы модератор клана");
                                 } else {
                                     config.set("players." + playerAdd + ".massage", "Поздравляем! Отныне вы модератор сервера");
                                 }
@@ -660,6 +660,44 @@ public class ClanCommands implements CommandExecutor, Listener {
                 return false;
             }
 
+        }
+
+        if (args[0].equals("delmoderator")) {
+            FileConfiguration config = _plugin.getConfig();
+            Player playerSender = (Player) sender;
+            boolean inClan = config.getBoolean("players." + playerSender.getName() + ".inclan?");
+            String clan = config.getString("players." + playerSender.getName() + ".clan");
+            String firstOwner = config.getString("clans." + clan + ".first-owner");
+            List<String> owners = config.getStringList("clans." + clan + ".owners");
+            String playerDel = args[1];
+            if (inClan) {
+                if (playerSender.getName().equals(firstOwner)) {
+                    if (args.length == 2) {
+                        if (owners.contains(playerDel)) {
+                            owners.remove(playerDel);
+                            config.set("clans." + clan + ".owners", owners);
+                            if (_plugin.getServer().getPlayer(playerDel) != null) {
+                                Objects.requireNonNull(_plugin.getServer().getPlayer(playerDel)).sendMessage(ChatColor.GREEN + "[Info] " + ChatColor.GOLD + "К сожалению, вы теперь не являетесь модератором клана(");
+                            } else {
+                                config.set("players." + playerDel + ".massage", "К сожалению, вы теперь не являетесь модератором клана(");
+                            }
+                            _plugin.saveConfig();
+                        } else {
+                            playerSender.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Этот игрок не является модератором вашего клана");
+                            return false;
+                        }
+                    } else {
+                        playerSender.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Напишите имя игрока");
+                        return false;
+                    }
+                } else {
+                    playerSender.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Вы не являетесь создателем клана");
+                    return false;
+                }
+            } else {
+                playerSender.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Вы не состоите в клане");
+                return false;
+            }
         }
 
         return false;
