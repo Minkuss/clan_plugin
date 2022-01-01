@@ -293,12 +293,18 @@ public class ClanCommands implements CommandExecutor, Listener {
 
             String playerkick = args[1];
 
-            if (owners.contains(playerkick) && !Objects.equals(firstOwner, playersender.getName())) {
-                playersender.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Вы не можете исключить модератора или создателя клана");
-                return false;
-            }
 
-            else if (args.length == 2) {
+            if (args.length == 2) {
+
+                if (owners.contains(playerkick) && !Objects.equals(firstOwner, playersender.getName())) {
+                    playersender.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Вы не можете исключить модератора или создателя клана");
+                    return false;
+                }
+
+                if (owners.contains(playerkick) && Objects.equals(firstOwner, playersender.getName())) {
+                    owners.remove(playerkick);
+                    config.set("clans." + clan + ".owners", owners);
+                }
 
                 if (playersender.getName().equals(playerkick)) {
                     playersender.sendMessage(ChatColor.RED + "[Error] " + ChatColor.GOLD + "Вы не можете исключить самого себя");
